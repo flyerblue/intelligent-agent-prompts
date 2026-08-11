@@ -36,12 +36,13 @@
 
 四、执行与修复
 
-1. 字段、业务和代码质量初审只通过 `node mcp-client.mjs batch @<tasks.json>` 执行，默认并发 3。
+1. 字段、业务和代码质量初审只通过 `node mcp-client.mjs batch @<tasks.json> --concurrency 3 --intervalMs 600000` 执行；禁止另外启动高频状态轮询。
 2. 主 Agent 只做结果聚合、证据核对和冲突裁决，不重新做一遍 Claude 已完成的杂务。
 3. 汇总问题后，可让提出问题的 Claude 复用原 session 修复。修复任务使用 `permissionMode: acceptEdits`，明确可写文件、禁止项和验证要求；重叠代码范围串行执行。
 4. 代码质量 Claude 可在不改变业务语义的前提下调整结构、补必要注释和可观测性、降低复杂度并验证。
 5. 代码稳定后再运行文档维护任务，使用 `permissionMode: acceptEdits`，明确只允许修改 `项目文档/**`；可以整理、移动、合并和更新文档，但不修改项目代码。
 6. 每个阶段至多一次批量调用，不按单个问题反复调用。再次复核优先复用原 session，只复核高风险、争议或修复过的问题。
+7. 直接启动异步 job 时，第一次以及后续每次状态检查前都必须完整等待 10 分钟。根据当前 Shell 使用：PowerShell `Start-Sleep -Seconds 600`、CMD `timeout /t 600 /nobreak`、Bash `sleep 600`。当前环境为 PowerShell 时固定使用 `Start-Sleep -Seconds 600`，禁止 `watch`、忙等待、短间隔循环或频繁读取输出。
 
 五、最终输出
 

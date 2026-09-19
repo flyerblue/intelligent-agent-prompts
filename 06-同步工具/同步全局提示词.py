@@ -27,8 +27,18 @@ import os
 import shutil
 import sys
 import time
+import uuid
 
 配置目录 = os.path.dirname(os.path.abspath(__file__))
+仓库根目录 = os.path.dirname(配置目录)
+
+
+def 解析路径(路径):
+    """展开 ~ 为当前用户主目录；相对路径按仓库根目录定位，保证不同用户名、不同克隆位置可用。"""
+    路径 = os.path.expanduser(路径)
+    if not os.path.isabs(路径):
+        路径 = os.path.normpath(os.path.join(仓库根目录, 路径))
+    return 路径
 
 
 class 体系错误(Exception):
@@ -95,12 +105,14 @@ def 置字段(数据, 字段路径, 值):
     父[字段路径[-1]] = 值
 
 
-def 定位ccgui条目(数据, 名称):
-    """按名称在 prompts 中定位唯一条目；重名或缺失都视为配置错误。"""
+def 定位ccgui条目(数据, 名称, 允许缺失=False):
+    """按名称在 prompts 中定位唯一条目；重名视为配置错误；允许缺失时不报错返回 None（apply 时新建）。"""
     匹配 = [p for p in 数据['prompts'].values() if p.get('name') == 名称]
-    if len(匹配) != 1:
-        raise 体系错误('ccgui 提示词「%s」匹配 %d 条，应为 1 条' % (名称, len(匹配)))
-    return 匹配[0]
+    if len(匹配) == 1:
+        return 匹配[0]
+    if not 匹配 and 允许缺失:
+        return None
+    raise 体系错误('ccgui 提示词「%s」匹配 %d 条，应为 1 条' % (名称, len(匹配)))
 
 
 def 读取目标当前值(目标):
@@ -117,7 +129,8 @@ def 读取目标当前值(目标):
         except (KeyError, TypeError):
             return None, 数据
     if 目标['类型'] == 'ccgui-prompt':
-        return 定位ccgui条目(数据, 目标['提示词名称']).get('content'), 数据
+        条目 = 定位ccgui条目(数据, 目标['提示词名称'], 允许缺失=True)
+        return (条目 or {}).get('content'), 数据
     raise 体系错误('未知目标类型: %s' % 目标['类型'])
 
 
@@ -167,7 +180,12 @@ def 应用目标(目标, 期望, 数据):
             if 目标['类型'] == 'json-field':
                 置字段(数据, 目标['字段路径'], 期望.rstrip('\n'))
             else:
-                条目 = 定位ccgui条目(数据, 目标['提示词名称'])
+                条目 = 定位ccgui条目(数据, 目标['提示词名称'], 允许缺失=True)
+                if 条目 is None:
+                    新id = str(uuid.uuid4())
+                    条目 = {'id': 新id, 'name': 目标['提示词名称'], 'content': '',
+                            'createdAt': int(time.time() * 1000), 'updatedAt': int(time.time() * 1000)}
+                    数据['prompts'][新id] = 条目
                 条目['content'] = 期望.rstrip('\n')
                 条目['updatedAt'] = int(time.time() * 1000)
             文本 = json.dumps(数据, ensure_ascii=False, indent=2)
@@ -189,6 +207,9 @@ def main():
         return 2
     try:
         配置 = 读取JSON(os.path.join(配置目录, '同步配置.json'))
+        配置['源文件'] = 解析路径(配置['源文件'])
+        for 目标 in 配置['目标']:
+            目标['文件'] = 解析路径(目标['文件'])
         正文 = 读取源正文(配置['源文件'])
     except 体系错误 as e:
         print('错误: %s' % e)

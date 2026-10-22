@@ -1,0 +1,660 @@
+{
+  "schema": "codex-collaboration-template-v1",
+  "schemaNote": "中立可复制结构；cc.gui 原生协作模板持久化格式尚未确认，不直接声称可导入。",
+  "sharedRules": "D:\\1poj\\学习\\智能体提示词体系\\03-协作提示词\\02-协作精选通用规则.md",
+  "handoffRules": "D:\\1poj\\学习\\智能体提示词体系\\03-协作提示词\\05-协作交接与输出.md",
+  "templates": [
+    {
+      "templateName": "协作模板-智能体总控",
+      "description": "作为统一入口，由总控判断场景、执行矩阵、安全边界、验证力度和是否编排其他协作 Agent。",
+      "default": false,
+      "steps": [
+        {
+          "stepName": "总控判定与编排",
+          "agent": "协作-智能体总控",
+          "flowConstraint": "先判主场景或组合场景，再定执行矩阵、安全边界、验证力度和门禁；小任务可自主执行，复杂任务按需编排其他协作 Agent。",
+          "approvalPoint": "权限扩大、真实数据或外部副作用、重大架构变更、范围漂移和需求歧义影响结果时暂停确认。",
+          "output": "总控执行或编排摘要",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-智能体总控.md"
+        }
+      ]
+    },
+    {
+      "templateName": "协作模板-新功能开发",
+      "description": "从需求和项目上下文开始，完成新功能的最小实现、验证、审查和归档。",
+      "default": false,
+      "steps": [
+        {
+          "stepName": "需求与项目探索",
+          "agent": "协作-需求与项目探索",
+          "flowConstraint": "明确目标、验收标准、范围和不做项；阅读必要项目文档、模块和调用链；只读。",
+          "approvalPoint": "需求、范围或公共契约不清时暂停确认。",
+          "output": "统一交接摘要",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-需求与项目探索.md"
+        },
+        {
+          "stepName": "实现前质疑",
+          "agent": "协作-质疑与范围审查",
+          "flowConstraint": "检查业务语义、能力缺口、过度设计、过度防御和无关加料；默认只读。",
+          "approvalPoint": "退回澄清或修改时不得进入实现。",
+          "output": "质疑门禁结论",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-质疑与范围审查.md"
+        },
+        {
+          "stepName": "新功能实现",
+          "agent": "协作-新功能开发",
+          "flowConstraint": "只实现已确认需求和最小必要内容；保护用户改动；不擅自改数据库或外部系统。",
+          "approvalPoint": "业务口径、权限、数据库结构或兼容策略变化需确认。",
+          "output": "实现交接摘要",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-新功能开发.md"
+        },
+        {
+          "stepName": "测试与验证",
+          "agent": "协作-测试与验证",
+          "flowConstraint": "按风险选择最低足够的单元、集成、接口、Playwright 或交叉审核模式；保留失败证据。",
+          "approvalPoint": "高成本、真实写入或外部副作用测试需确认。",
+          "output": "测试结果与风险",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-测试与验证.md"
+        },
+        {
+          "stepName": "代码审查与维护",
+          "agent": "协作-代码审查与维护",
+          "flowConstraint": "检查字段语义、需求回归、范围污染、可维护性和验证闭环；默认只读，可补必要注释。",
+          "approvalPoint": "逻辑、结构、依赖、测试或日志修改需确认。",
+          "output": "Review 结论",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-代码审查与维护.md"
+        },
+        {
+          "stepName": "文档编写与收尾",
+          "agent": "协作-文档编写与收尾",
+          "flowConstraint": "归档成功路径、决策、模块认知和风险；清理仅由本任务创建且明确无用的临时内容。",
+          "approvalPoint": "删除、移动或批量清理不确定内容先确认。",
+          "output": "最终交付摘要",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-文档编写与收尾.md"
+        }
+      ]
+    },
+    {
+      "templateName": "协作模板-功能修改",
+      "description": "在明确旧行为和目标新行为的基础上完成受控功能变更。",
+      "default": false,
+      "steps": [
+        {
+          "stepName": "需求与项目探索",
+          "agent": "协作-需求与项目探索",
+          "flowConstraint": "确认旧行为、目标行为、兼容范围、影响模块和不做项；只读。",
+          "approvalPoint": "行为保留或废弃不清时暂停确认。",
+          "output": "统一交接摘要",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-需求与项目探索.md"
+        },
+        {
+          "stepName": "实现前质疑",
+          "agent": "协作-质疑与范围审查",
+          "flowConstraint": "检查修改是否符合业务、是否误用字段、是否扩大为无关重构或加入无关增强。",
+          "approvalPoint": "退回项解决前不得实现。",
+          "output": "质疑门禁结论",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-质疑与范围审查.md"
+        },
+        {
+          "stepName": "功能修改",
+          "agent": "协作-功能修改",
+          "flowConstraint": "只修改受影响模块，保持确认的兼容边界和公共契约。",
+          "approvalPoint": "公共接口、权限、数据库和跨模块行为变化需确认。",
+          "output": "变更摘要",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-功能修改.md"
+        },
+        {
+          "stepName": "测试与验证",
+          "agent": "协作-测试与验证",
+          "flowConstraint": "优先验证旧路径、新路径和邻近回归路径；失败必须分类并保留证据。",
+          "approvalPoint": "高风险或真实写入测试需确认。",
+          "output": "测试结果与风险",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-测试与验证.md"
+        },
+        {
+          "stepName": "代码审查与维护",
+          "agent": "协作-代码审查与维护",
+          "flowConstraint": "独立复查语义、需求回归、范围和质量；默认不改实现。",
+          "approvalPoint": "非注释修改需确认。",
+          "output": "Review 结论",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-代码审查与维护.md"
+        },
+        {
+          "stepName": "文档编写与收尾",
+          "agent": "协作-文档编写与收尾",
+          "flowConstraint": "归档行为变化、验证和风险，执行安全收尾。",
+          "approvalPoint": "不确定清理项先列出。",
+          "output": "最终交付摘要",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-文档编写与收尾.md"
+        }
+      ]
+    },
+    {
+      "templateName": "协作模板-问题修复",
+      "description": "先复现和定位根因，再经质疑门禁完成最小修复、回归和归档。",
+      "default": false,
+      "steps": [
+        {
+          "stepName": "复现与根因定位",
+          "agent": "协作-问题修复",
+          "flowConstraint": "第一环节必须复现、收集证据并区分现象、直接原因和根因；无法复现时说明缺口。",
+          "approvalPoint": "没有可靠根因或复现条件时不得直接修改。",
+          "output": "根因与修复方案",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-问题修复.md"
+        },
+        {
+          "stepName": "修复方案质疑",
+          "agent": "协作-质疑与范围审查",
+          "flowConstraint": "检查方案是否作用于根因，是否绕过问题、过度防御、扩大范围或加入无关功能。",
+          "approvalPoint": "退回澄清或修改时回到问题修复环节。",
+          "output": "质疑门禁结论",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-质疑与范围审查.md"
+        },
+        {
+          "stepName": "最小修复",
+          "agent": "协作-功能修改",
+          "flowConstraint": "按确认方案执行最小变更；临时止血需记录长期正解、限制和回收条件。",
+          "approvalPoint": "修复方案、影响范围或数据行为变化需确认。",
+          "output": "修复摘要",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-功能修改.md"
+        },
+        {
+          "stepName": "回归验证",
+          "agent": "协作-测试与验证",
+          "flowConstraint": "先验证原始复现路径，再验证受影响邻近路径；不通过删断言或伪造成功。",
+          "approvalPoint": "真实写入或外部副作用测试需确认。",
+          "output": "回归证据",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-测试与验证.md"
+        },
+        {
+          "stepName": "代码审查与收尾",
+          "agent": "协作-代码审查与维护",
+          "flowConstraint": "复查根因修复、范围和质量；输出需归档的成功路径和剩余风险。",
+          "approvalPoint": "需要代码结构或日志修改时确认。",
+          "output": "Review 与收尾建议",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-代码审查与维护.md"
+        },
+        {
+          "stepName": "文档归档与交接",
+          "agent": "协作-文档编写与收尾",
+          "flowConstraint": "按模块归档问题上下文、根因、处理路径、验证和经验；完成安全清理。",
+          "approvalPoint": "删除或移动不确定文件先确认。",
+          "output": "最终交付摘要",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-文档编写与收尾.md"
+        }
+      ]
+    },
+    {
+      "templateName": "协作模板-架构设计",
+      "description": "只产出架构设计；用户明确授权时可切换到最小框架搭建。",
+      "default": false,
+      "steps": [
+        {
+          "stepName": "需求与现状探索",
+          "agent": "协作-需求与项目探索",
+          "flowConstraint": "只读恢复系统现状、模块、依赖、数据流、权限和约束。",
+          "approvalPoint": "关键业务口径、技术能力或范围不清时暂停。",
+          "output": "现状与问题摘要",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-需求与项目探索.md"
+        },
+        {
+          "stepName": "架构设计",
+          "agent": "协作-架构设计",
+          "flowConstraint": "默认只输出模块、接口、数据、权限、异常、一致性、审计、部署、迁移和测试设计，不写业务实现。",
+          "approvalPoint": "推荐方案、权限模型和重大技术选型需用户确认。",
+          "output": "架构设计文档",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-架构设计.md"
+        },
+        {
+          "stepName": "架构质疑",
+          "agent": "协作-质疑与范围审查",
+          "flowConstraint": "检查必要性、复杂度、依赖方向、权限最小化、回滚和无证据的未来扩展。",
+          "approvalPoint": "退回修改或需要用户决定时不得进入搭建。",
+          "output": "架构门禁结论",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-质疑与范围审查.md"
+        },
+        {
+          "stepName": "文档编写与收尾",
+          "agent": "协作-文档编写与收尾",
+          "flowConstraint": "归档决策、架构边界、待确认项和实施入口；设计模式不创建代码。",
+          "approvalPoint": "若选择框架搭建，必须另行确认搭建范围。",
+          "output": "设计交付摘要",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-文档编写与收尾.md"
+        }
+      ],
+      "optionalMode": {
+        "name": "框架搭建",
+        "constraint": "仅在架构确认后创建最小目录、接口、抽象和配置骨架；不实现业务、不接真实系统。",
+        "extraSteps": [
+          "协作-架构设计",
+          "协作-质疑与范围审查",
+          "协作-新功能开发",
+          "协作-测试与验证",
+          "协作-文档编写与收尾"
+        ]
+      }
+    },
+    {
+      "templateName": "协作模板-代码审查与维护",
+      "description": "对现有实现做独立审查，并按授权处理必要注释和质量问题。",
+      "default": false,
+      "steps": [
+        {
+          "stepName": "代码审查",
+          "agent": "协作-代码审查与维护",
+          "flowConstraint": "读取 diff、需求、文档和调用链，按复杂度执行字段、业务和质量审查；默认只读。",
+          "approvalPoint": "发现阻塞问题先报告，不直接改逻辑。",
+          "output": "Review 结论",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-代码审查与维护.md"
+        },
+        {
+          "stepName": "代码质量管理",
+          "agent": "协作-代码质量管理",
+          "flowConstraint": "按需选择注释、日志、功能树、术语或通用方法索引子场景；默认可补必要注释。",
+          "approvalPoint": "加日志、拆方法、重构结构或改依赖需确认。",
+          "output": "质量改进建议",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-代码质量管理.md"
+        },
+        {
+          "stepName": "验证与复核",
+          "agent": "协作-测试与验证",
+          "flowConstraint": "验证审查提出的关键风险和必要改动，不以测试通过替代业务正确性。",
+          "approvalPoint": "高成本测试需确认。",
+          "output": "复核证据",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-测试与验证.md"
+        },
+        {
+          "stepName": "文档编写与收尾",
+          "agent": "协作-文档编写与收尾",
+          "flowConstraint": "归档可复用结论、风险和方法索引，清理明确无用的本任务产物。",
+          "approvalPoint": "不确定清理项先确认。",
+          "output": "最终交付摘要",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-文档编写与收尾.md"
+        }
+      ]
+    },
+    {
+      "templateName": "协作模板-代码质量管理",
+      "description": "围绕可读性、可观测性和可定位性做轻量质量治理。",
+      "default": false,
+      "steps": [
+        {
+          "stepName": "质量问题识别",
+          "agent": "协作-代码质量管理",
+          "flowConstraint": "选择必要子场景，先建立问题证据和改进边界，不默认全面重构。",
+          "approvalPoint": "改动结构、日志、依赖或测试前确认。",
+          "output": "质量问题清单",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-代码质量管理.md"
+        },
+        {
+          "stepName": "范围质疑",
+          "agent": "协作-质疑与范围审查",
+          "flowConstraint": "检查改进是否真正必要，是否过度设计、过度日志或引入无关治理。",
+          "approvalPoint": "无必要或范围污染项不进入修改。",
+          "output": "质疑结论",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-质疑与范围审查.md"
+        },
+        {
+          "stepName": "质量验证",
+          "agent": "协作-测试与验证",
+          "flowConstraint": "验证注释不改变行为，日志不泄露秘密，功能树和索引能定位代码。",
+          "approvalPoint": "涉及运行环境或高成本检查需确认。",
+          "output": "验证结果",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-测试与验证.md"
+        },
+        {
+          "stepName": "文档与收尾",
+          "agent": "协作-文档编写与收尾",
+          "flowConstraint": "只归档长期有用的术语、功能树、方法索引和质量决策。",
+          "approvalPoint": "清理不确定文档先确认。",
+          "output": "最终交付摘要",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-文档编写与收尾.md"
+        }
+      ]
+    },
+    {
+      "templateName": "协作模板-调研与决策",
+      "description": "只读完成项目、技术或业务调研，形成可执行决策。",
+      "default": false,
+      "steps": [
+        {
+          "stepName": "调研与上下文恢复",
+          "agent": "协作-调研与决策",
+          "flowConstraint": "明确问题、证据来源和范围，读取项目文档、代码和可信资料；默认只读。",
+          "approvalPoint": "关键事实无法确认时暂停猜测。",
+          "output": "事实与推断",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-调研与决策.md"
+        },
+        {
+          "stepName": "方案质疑",
+          "agent": "协作-质疑与范围审查",
+          "flowConstraint": "检查推荐方案的必要性、能力匹配、成本、风险和无关加料。",
+          "approvalPoint": "存在关键取舍时交给用户决策。",
+          "output": "质疑结论",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-质疑与范围审查.md"
+        },
+        {
+          "stepName": "文档编写与收尾",
+          "agent": "协作-文档编写与收尾",
+          "flowConstraint": "归档阶段决策、稳定认知、待确认项和下一步入口，不修改实现。",
+          "approvalPoint": "删除或合并不确定资料先确认。",
+          "output": "决策交付摘要",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-文档编写与收尾.md"
+        }
+      ]
+    },
+    {
+      "templateName": "协作模板-文档编写与归档",
+      "description": "整理项目文档、开发记忆、资料和阶段归档，并完成交接。",
+      "default": false,
+      "steps": [
+        {
+          "stepName": "文档范围确认",
+          "agent": "协作-需求与项目探索",
+          "flowConstraint": "确认文档目标、现有结构、归档层级和不做项；先读后改。",
+          "approvalPoint": "结构冲突或删除风险先确认。",
+          "output": "文档计划",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-需求与项目探索.md"
+        },
+        {
+          "stepName": "文档编写与整理",
+          "agent": "协作-文档编写与收尾",
+          "flowConstraint": "少而准，优先更新已有主题；按认知、日志、成功路径、阶段事实和资料分类。",
+          "approvalPoint": "删除、移动、合并拿不准的内容先列出。",
+          "output": "文档变更摘要",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-文档编写与收尾.md"
+        },
+        {
+          "stepName": "文档质疑与收尾",
+          "agent": "协作-质疑与范围审查",
+          "flowConstraint": "检查事实/推断混淆、重复、过度记录、错误归档和无意义文档；只读复核。",
+          "approvalPoint": "争议内容保留并请用户确认。",
+          "output": "文档 Review",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-质疑与范围审查.md"
+        }
+      ]
+    },
+    {
+      "templateName": "协作模板-工具与脚本开发",
+      "description": "开发单一用途的个人工具、运维脚本、简单 EXE 或受控 SQL 工具。",
+      "default": false,
+      "steps": [
+        {
+          "stepName": "工具需求与边界",
+          "agent": "协作-需求与项目探索",
+          "flowConstraint": "明确使用者、环境、输入输出、权限、幂等、失败方式和交付形式。",
+          "approvalPoint": "危险动作、真实数据或外部系统范围不清时暂停。",
+          "output": "工具规格",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-需求与项目探索.md"
+        },
+        {
+          "stepName": "工具范围质疑",
+          "agent": "协作-质疑与范围审查",
+          "flowConstraint": "检查是否过度平台化、无关加料、错误依赖或不必要防御。",
+          "approvalPoint": "退回项解决前不开发。",
+          "output": "质疑结论",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-质疑与范围审查.md"
+        },
+        {
+          "stepName": "工具实现",
+          "agent": "协作-工具与脚本开发",
+          "flowConstraint": "围绕单一用途做最小可靠交付，优先 dry-run、预览、确认、日志和恢复路径。",
+          "approvalPoint": "打包、真实写入和外部调用需确认。",
+          "output": "工具交付摘要",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-工具与脚本开发.md"
+        },
+        {
+          "stepName": "测试与收尾",
+          "agent": "协作-测试与验证",
+          "flowConstraint": "验证正常、空输入、错误、重复执行、中途失败和恢复；数据库默认只读。",
+          "approvalPoint": "高成本或真实写入验证需确认。",
+          "output": "测试结果",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-测试与验证.md"
+        },
+        {
+          "stepName": "文档编写与收尾",
+          "agent": "协作-文档编写与收尾",
+          "flowConstraint": "写使用说明、配置、风险和回滚；工具长期有价值时归档到工具目录。",
+          "approvalPoint": "不确定清理项先确认。",
+          "output": "最终交付摘要",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-文档编写与收尾.md"
+        }
+      ]
+    },
+    {
+      "templateName": "协作模板-通用任务闭环",
+      "description": "适用于无法直接归入单一专项模板的任务；按前置探索结果选择一个主场景执行，测试和归档按需进行。",
+      "default": false,
+      "steps": [
+        {
+          "stepName": "需求与项目探索",
+          "agent": "协作-需求与项目探索",
+          "flowConstraint": "明确目标、范围、不做项和主场景；只读恢复必要上下文。",
+          "approvalPoint": "关键信息不足时退回澄清。",
+          "output": "统一交接摘要",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-需求与项目探索.md"
+        },
+        {
+          "stepName": "实现前质疑",
+          "agent": "协作-质疑与范围审查",
+          "flowConstraint": "检查需求语义、必要性、能力匹配、过度设计和无关加料；默认只读。",
+          "approvalPoint": "退回澄清或修改时不得进入执行。",
+          "output": "质疑门禁结论",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-质疑与范围审查.md"
+        },
+        {
+          "stepName": "主任务执行",
+          "agent": "协作-通用任务执行",
+          "flowConstraint": "按前置交接选择一个主场景，只执行已确认范围；不重新设计流程。",
+          "approvalPoint": "主场景、权限或范围发生变化时暂停确认。",
+          "output": "执行交接摘要",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-通用任务执行.md"
+        },
+        {
+          "stepName": "按需验证",
+          "agent": "协作-测试与验证",
+          "flowConstraint": "仅在产生代码、脚本、配置或用户要求验证时执行；其他任务可跳过。",
+          "approvalPoint": "高成本测试、真实写入或外部副作用需确认。",
+          "output": "测试结果与风险",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-测试与验证.md"
+        },
+        {
+          "stepName": "文档与收尾",
+          "agent": "协作-文档编写与收尾",
+          "flowConstraint": "仅归档有长期价值的结论，检查交付物并完成安全收尾；无归档价值时明确写无。",
+          "approvalPoint": "删除、移动或批量清理不确定内容先确认。",
+          "output": "最终交付摘要",
+          "cli": "codex",
+          "model": "cc.gui当前默认模型",
+          "thinking": "按任务复杂度",
+          "outputMode": "交接摘要",
+          "agentPromptPath": "D:\\\\1poj\\\\学习\\\\智能体提示词体系\\\\03-协作提示词\\\\03-子Agent详细提示词\\\\协作-文档编写与收尾.md"
+        }
+      ]
+    }
+  ]
+}

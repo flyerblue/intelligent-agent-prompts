@@ -1,0 +1,37 @@
+{
+  "源文件": "01-通用规则\\常驻通用规则.md",
+  "目标": [
+    {
+      "名称": "zcode",
+      "类型": "markdown",
+      "文件": "~\\.zcode\\AGENTS.md",
+      "包装文件": "包装-zcode.md"
+    },
+    {
+      "名称": "codex",
+      "类型": "markdown",
+      "文件": "~\\.codex\\AGENTS.md",
+      "包装文件": null
+    },
+    {
+      "名称": "claude",
+      "类型": "markdown-static",
+      "文件": "~\\.claude\\CLAUDE.md",
+      "包装文件": "包装-指针.md"
+    },
+    {
+      "名称": "ccgui",
+      "类型": "ccgui-prompt",
+      "文件": "~\\.ccgui\\prompt.json",
+      "提示词名称": "01-主控-01-总控版智能体",
+      "包装文件": "包装-指针.md"
+    },
+    {
+      "名称": "paseo",
+      "类型": "json-field",
+      "文件": "~\\.paseo\\config.json",
+      "字段路径": ["daemon", "appendSystemPrompt"],
+      "包装文件": null
+    }
+  ]
+}

@@ -18,9 +18,11 @@
   - apply 写入前自动备份为 <原文件名>.bak-同步-<时间戳>
   - 写入后回读校验，不一致按失败报告且不删备份
   - 内容比较忽略 CRLF/LF 换行差异
+  - json-field / ccgui-prompt 目标为整文件重写：写回前探测原文件缩进风格并沿用；
+    未识别（非标准 json.dumps 风格）时按默认 2 空格缩进重写并在输出中注明
   - 建议先退出对应工具（尤其 paseo/ccgui）再 apply，避免运行中的程序回写覆盖
 
-退出码: 0=全部一致或全部更新成功；1=存在差异（检查模式）或有失败（应用模式）；2=运行错误
+退出码: 0=全部一致或全部更新成功；1=存在差异或有目标失败（含目标文件损坏，逐目标报告、不中断剩余目标）；2=运行错误（脚本自身或配置错误）
 """
 import json
 import os
@@ -99,15 +101,27 @@ def 取字段(数据, 字段路径):
 
 
 def 置字段(数据, 字段路径, 值):
+    """沿字段路径写入值；中间键缺失时逐层补建空对象，已存在但不是对象时报错不覆盖。"""
     父 = 数据
     for 键 in 字段路径[:-1]:
+        if 键 not in 父:
+            父[键] = {}
         父 = 父[键]
+        if not isinstance(父, dict):
+            raise 体系错误('字段路径「%s」的中间键「%s」已存在且不是对象，疑似结构异常，不覆盖'
+                           % ('.'.join(字段路径), 键))
     父[字段路径[-1]] = 值
 
 
 def 定位ccgui条目(数据, 名称, 允许缺失=False):
-    """按名称在 prompts 中定位唯一条目；重名视为配置错误；允许缺失时不报错返回 None（apply 时新建）。"""
-    匹配 = [p for p in 数据['prompts'].values() if p.get('name') == 名称]
+    """按名称在 prompts 中定位唯一条目；重名视为配置错误；允许缺失时不报错返回 None（apply 时新建）。
+
+    prompts 键缺失或不是对象时视为目标文件结构异常，直接报失败而不静默重建，避免覆盖外部数据。
+    """
+    prompts = 数据.get('prompts') if isinstance(数据, dict) else None
+    if not isinstance(prompts, dict):
+        raise 体系错误('ccgui 目标文件缺少可用的 prompts 对象，疑似结构异常，不自动重建')
+    匹配 = [p for p in prompts.values() if isinstance(p, dict) and p.get('name') == 名称]
     if len(匹配) == 1:
         return 匹配[0]
     if not 匹配 and 允许缺失:
@@ -116,22 +130,31 @@ def 定位ccgui条目(数据, 名称, 允许缺失=False):
 
 
 def 读取目标当前值(目标):
-    """返回 (当前值或 None, 已载入的JSON数据或None)；文件缺失返回 None 而不是报错。"""
+    """返回 (当前值或 None, 已载入的JSON数据或None)；文件缺失返回 None 而不是报错。
+
+    目标文件损坏（编码错误、JSON 解析失败、权限不足等）转译为体系错误，由主循环按单目标
+    失败报告并继续剩余目标；ValueError 涵盖 JSONDecodeError 与 UnicodeDecodeError。
+    """
     文件 = 目标['文件']
     if not os.path.isfile(文件):
         return None, None
-    if 目标['类型'] in ('markdown', 'markdown-static'):
-        return open(文件, encoding='utf-8').read(), None
-    数据 = 读取JSON(文件)
-    if 目标['类型'] == 'json-field':
-        try:
-            return 取字段(数据, 目标['字段路径']), 数据
-        except (KeyError, TypeError):
-            return None, 数据
-    if 目标['类型'] == 'ccgui-prompt':
-        条目 = 定位ccgui条目(数据, 目标['提示词名称'], 允许缺失=True)
-        return (条目 or {}).get('content'), 数据
-    raise 体系错误('未知目标类型: %s' % 目标['类型'])
+    try:
+        if 目标['类型'] in ('markdown', 'markdown-static'):
+            return open(文件, encoding='utf-8').read(), None
+        数据 = 读取JSON(文件)
+        if 目标['类型'] == 'json-field':
+            try:
+                return 取字段(数据, 目标['字段路径']), 数据
+            except (KeyError, TypeError):
+                return None, 数据
+        if 目标['类型'] == 'ccgui-prompt':
+            条目 = 定位ccgui条目(数据, 目标['提示词名称'], 允许缺失=True)
+            return (条目 or {}).get('content'), 数据
+        raise 体系错误('未知目标类型: %s' % 目标['类型'])
+    except 体系错误:
+        raise
+    except (ValueError, KeyError, TypeError, AttributeError, OSError) as e:
+        raise 体系错误('目标文件无法读取: %s（%s: %s）' % (文件, type(e).__name__, e))
 
 
 def 差异摘要(当前值, 期望):
@@ -142,6 +165,21 @@ def 差异摘要(当前值, 期望):
         if a != b:
             return '第 %d 行起不同：现为 %r，应为 %r' % (i, a[:30], b[:30])
     return '行数不同：现 %d 行，应为 %d 行' % (len(当前行), len(期望行))
+
+
+def 探测JSON缩进(数据, 原文本):
+    """探测原文件与 json.dumps 兼容的缩进风格（隐含键序与分隔符一致）；识别不了返回 None。
+
+    必须在修改 数据 前调用：用未修改的解析结果反序列化比对原文本，整文件重写时沿用该风格，
+    避免单字段同步重排 paseo/ccgui 等外部程序管理文件的格式。
+    """
+    if not 原文本:
+        return None
+    基准 = 归一(原文本).rstrip('\n')
+    for 缩进 in list(range(1, 9)) + ['\t']:
+        if 归一(json.dumps(数据, ensure_ascii=False, indent=缩进)).rstrip('\n') == 基准:
+            return 缩进
+    return None
 
 
 def 目标换行符(文件, 文本):
@@ -161,22 +199,28 @@ def 写入文件(文件, 文本, 换行):
 
 
 def 应用目标(目标, 期望, 数据):
-    """备份后写入单个目标并回读校验；返回 (是否成功, 说明)。"""
+    """备份后写入单个目标并回读校验；返回 (是否成功, 说明)。
+
+    JSON 类目标为整文件重写：必须在修改 数据 前探测原文本缩进风格，写回时沿用；
+    中间键缺失由 置字段 逐层补建；回读校验也在异常保护内（读取目标当前值 可能抛体系错误）。
+    """
     文件 = 目标['文件']
     目录 = os.path.dirname(文件)
     if 目录 and not os.path.isdir(目录):
         return False, '目标目录不存在'
     备份 = 文件 + '.bak-同步-' + time.strftime('%Y%m%d-%H%M%S')
+    原文本 = None
+    缩进 = None
     if os.path.isfile(文件):
         shutil.copy2(文件, 备份)
     try:
         if 目标['类型'] in ('markdown', 'markdown-static'):
             写入文件(文件, 期望, 目标换行符(文件, 期望))
         else:
+            原文本 = open(文件, encoding='utf-8').read() if os.path.isfile(文件) else None
+            缩进 = 探测JSON缩进(数据, 原文本)
             if 数据 is None:
                 数据 = {'prompts': {}} if 目标['类型'] == 'ccgui-prompt' else {}
-                for 键 in 目标.get('字段路径', [])[:-1]:
-                    数据[键] = {}
             if 目标['类型'] == 'json-field':
                 置字段(数据, 目标['字段路径'], 期望.rstrip('\n'))
             else:
@@ -188,14 +232,15 @@ def 应用目标(目标, 期望, 数据):
                     数据['prompts'][新id] = 条目
                 条目['content'] = 期望.rstrip('\n')
                 条目['updatedAt'] = int(time.time() * 1000)
-            文本 = json.dumps(数据, ensure_ascii=False, indent=2)
+            文本 = json.dumps(数据, ensure_ascii=False, indent=2 if 缩进 is None else 缩进)
             写入文件(文件, 文本 + '\n', 目标换行符(文件, 文本))
+        当前值, _ = 读取目标当前值(目标)
     except Exception as e:
-        return False, '写入异常: %s（备份保留在 %s）' % (e, 备份)
-    当前值, _ = 读取目标当前值(目标)
+        return False, '写入或校验异常: %s（备份保留在 %s）' % (e, 备份)
     if 当前值 is None or 归一(当前值).rstrip('\n') != 期望.rstrip('\n'):
         return False, '写入后校验不一致（备份保留在 %s）' % 备份
-    return True, '已备份至 %s' % os.path.basename(备份)
+    注明 = '；原 JSON 缩进风格未识别，按默认 2 空格整文件重写' if 原文本 is not None and 缩进 is None else ''
+    return True, '已备份至 %s%s' % (os.path.basename(备份), 注明)
 
 
 def main():
@@ -211,8 +256,9 @@ def main():
         for 目标 in 配置['目标']:
             目标['文件'] = 解析路径(目标['文件'])
         正文 = 读取源正文(配置['源文件'])
-    except 体系错误 as e:
-        print('错误: %s' % e)
+    except (体系错误, ValueError, KeyError, TypeError, OSError) as e:
+        # 配置或源文件损坏按运行错误退出；ValueError 涵盖 JSONDecodeError 与 UnicodeDecodeError
+        print('错误: %s' % (e if isinstance(e, 体系错误) else '%s: %s' % (type(e).__name__, e)))
         return 2
 
     有差异 = False
@@ -226,7 +272,7 @@ def main():
             期望 = 期望内容(目标, 正文)
             当前值, 数据 = 读取目标当前值(目标)
             if 当前值 is None:
-                状态, 摘要 = '缺失', '目标文件或字段不存在'
+                状态, 摘要 = '缺失', '目标文件或字段不存在，apply 时将补建'
             elif 归一(当前值).rstrip('\n') == 期望.rstrip('\n'):
                 状态, 摘要 = '一致', ''
             else:
@@ -244,9 +290,7 @@ def main():
         except 体系错误 as e:
             有失败 = True
             print('[失败] %s → %s' % (名称, e))
-    if 模式 == 'apply':
-        return 1 if 有失败 else 0
-    return 1 if 有差异 else 0
+    return 1 if (有差异 or 有失败) else 0
 
 
 if __name__ == '__main__':

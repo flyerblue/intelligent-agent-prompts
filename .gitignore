@@ -8,3 +8,10 @@ __pycache__/
 .v2c/
 .video_agent/
 .zcode/
+
+# 根目录临时输出与测试残留
+/test_*.txt
+/version_result*.txt
+/debug.log
+/gen_data.txt
+/nul
